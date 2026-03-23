@@ -4,7 +4,12 @@ import { gerarToken } from '../utils/jwt';
 
 export const registro = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { nome, email, telefone, cooperativa, senha } = req.body;
+    const { nome, email, telefone, documento, senha } = req.body;
+
+    if (!documento) {
+      res.status(400).json({ mensagem: 'CPF ou CNPJ é obrigatório.' });
+      return;
+    }
 
     const emailExistente = await User.findOne({ email });
     if (emailExistente) {
@@ -12,11 +17,17 @@ export const registro = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const documentoExistente = await User.findOne({ documento });
+    if (documentoExistente) {
+      res.status(409).json({ mensagem: 'CPF/CNPJ já cadastrado.' });
+      return;
+    }
+
     const usuario = await User.create({
       nome,
       email,
       telefone,
-      cooperativa: cooperativa ?? false,
+      documento,
       senha,
     });
 
@@ -33,6 +44,7 @@ export const registro = async (req: Request, res: Response): Promise<void> => {
         nome: usuario.nome,
         email: usuario.email,
         telefone: usuario.telefone,
+        documento: usuario.documento,
         cooperativa: usuario.cooperativa,
       },
     });
