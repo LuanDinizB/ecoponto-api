@@ -37,6 +37,7 @@ const UserSchema = new Schema<IUser>(
       required: [true, 'CPF ou CNPJ é obrigatório'],
       unique: true,
       trim: true,
+      set: (valor: string) => valor.replace(/\D/g, ''),
       validate: {
         validator: (valor: string) => {
           const { valido } = validarDocumento(valor);
