@@ -1,10 +1,12 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { validarDocumento, isCooperativa } from '../utils/document';
 
 export interface IUser extends Document {
   nome: string;
   email: string;
   telefone: string;
+  documento: string;
   cooperativa: boolean;
   senha: string;
   compararSenha(senhaInformada: string): Promise<boolean>;
@@ -30,6 +32,19 @@ const UserSchema = new Schema<IUser>(
       required: [true, 'Telefone é obrigatório'],
       trim: true,
     },
+    documento: {
+      type: String,
+      required: [true, 'CPF ou CNPJ é obrigatório'],
+      unique: true,
+      trim: true,
+      validate: {
+        validator: (valor: string) => {
+          const { valido } = validarDocumento(valor);
+          return valido;
+        },
+        message: 'CPF ou CNPJ inválido',
+      },
+    },
     cooperativa: {
       type: Boolean,
       default: false,
@@ -38,7 +53,7 @@ const UserSchema = new Schema<IUser>(
       type: String,
       required: [true, 'Senha é obrigatória'],
       minlength: [6, 'A senha deve ter no mínimo 6 caracteres'],
-      select: false, // Não retornar senha na consulta
+      select: false,
     },
   },
   {
@@ -46,11 +61,16 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-
 UserSchema.pre('save', async function (next) {
-  if (!this.isModified('senha')) return next();
-  const salt = await bcrypt.genSalt(10);
-  this.senha = await bcrypt.hash(this.senha, salt);
+  if (this.isModified('documento')) {
+    this.cooperativa = isCooperativa(this.documento);
+  }
+
+  if (this.isModified('senha')) {
+    const salt = await bcrypt.genSalt(10);
+    this.senha = await bcrypt.hash(this.senha, salt);
+  }
+
   next();
 });
 
