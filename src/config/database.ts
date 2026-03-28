@@ -1,17 +1,20 @@
 import mongoose from 'mongoose';
+import logger from './logger';
 
 export const connectDB = async (): Promise<void> => {
   const uri = process.env.MONGODB_URI;
 
   if (!uri) {
-    throw new Error('MONGODB_URI não definida nas variáveis de ambiente.');
+    logger.error('MONGODB_URI não definida nas variáveis de ambiente');
+    process.exit(1);
   }
 
   try {
+    logger.info('Conectando ao MongoDB...');
     await mongoose.connect(uri);
-    console.log('✅ MongoDB conectado com sucesso.');
+    logger.info('MongoDB conectado com sucesso');
   } catch (error) {
-    console.error('❌ Erro ao conectar no MongoDB:', error);
+    logger.error({ err: error }, 'Erro ao conectar no MongoDB');
     process.exit(1);
   }
 };
