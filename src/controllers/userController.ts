@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { User } from '../models/User';
 import logger from '../config/logger';
 
-
 export const getPerfil = async (req: Request, res: Response): Promise<void> => {
   try {
     logger.info({ usuarioId: req.usuarioId }, 'Buscando perfil do usuário');
@@ -19,10 +18,7 @@ export const getPerfil = async (req: Request, res: Response): Promise<void> => {
       id: usuario._id,
       nome: usuario.nome,
       email: usuario.email,
-      telefone: usuario.telefone,
-      cooperativa: usuario.cooperativa,
     });
-
   } catch (error) {
     logger.error({ err: error, usuarioId: req.usuarioId }, 'Erro inesperado ao buscar perfil');
     res.status(500).json({ mensagem: 'Erro interno no servidor.' });
@@ -34,13 +30,13 @@ export const atualizarPerfil = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { nome, telefone } = req.body;
+    const { nome } = req.body;
 
-    logger.info({ usuarioId: req.usuarioId, nome, telefone }, 'Tentativa de atualização de perfil');
+    logger.info({ usuarioId: req.usuarioId, nome }, 'Tentativa de atualização de perfil');
 
     const atualizado = await User.findByIdAndUpdate(
       req.usuarioId,
-      { nome, telefone },
+      { nome },
       { new: true, runValidators: true }
     );
 
@@ -57,11 +53,8 @@ export const atualizarPerfil = async (
         id: atualizado._id,
         nome: atualizado.nome,
         email: atualizado.email,
-        telefone: atualizado.telefone,
-        cooperativa: atualizado.cooperativa,
       },
     });
-
   } catch (error: unknown) {
     logger.error({ err: error, usuarioId: req.usuarioId }, 'Erro inesperado ao atualizar perfil');
     res.status(500).json({ mensagem: 'Erro interno no servidor.' });
@@ -106,7 +99,6 @@ export const alterarSenha = async (
 
     logger.info({ usuarioId: req.usuarioId }, 'Senha alterada com sucesso');
     res.status(200).json({ mensagem: 'Senha alterada com sucesso.' });
-
   } catch (error) {
     logger.error({ err: error, usuarioId: req.usuarioId }, 'Erro inesperado ao tentar alterar senha');
     res.status(500).json({ mensagem: 'Erro interno no servidor.' });
@@ -119,12 +111,14 @@ export const deletarConta = async (
 ): Promise<void> => {
   try {
     logger.info({ usuarioId: req.usuarioId }, 'Tentativa de exclusão de conta');
+
     const usuario = await User.findByIdAndDelete(req.usuarioId);
     if (!usuario) {
       logger.warn({ usuarioId: req.usuarioId }, 'Tentativa de exclusão de conta para usuário inexistente');
       res.status(404).json({ mensagem: 'Usuário não encontrado.' });
       return;
     }
+
     logger.info({ usuarioId: req.usuarioId }, 'Conta excluída com sucesso');
     res.status(200).json({ mensagem: 'Conta excluída com sucesso.' });
   } catch (error) {

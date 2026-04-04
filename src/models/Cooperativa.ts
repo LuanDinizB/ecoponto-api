@@ -1,14 +1,17 @@
 import mongoose, { Document, Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { cnpj } from 'cpf-cnpj-validator';
 
-export interface IUser extends Document {
+export interface ICooperative extends Document {
   nome: string;
   email: string;
+  telefone: string;
+  documento: string;
   senha: string;
   compararSenha(senhaInformada: string): Promise<boolean>;
 }
 
-const UserSchema = new Schema<IUser>(
+const CooperativeSchema = new Schema<ICooperative>(
   {
     nome: {
       type: String,
@@ -23,6 +26,22 @@ const UserSchema = new Schema<IUser>(
       trim: true,
       match: [/^\S+@\S+\.\S+$/, 'Formato de email inválido'],
     },
+    telefone: {
+      type: String,
+      required: [true, 'Telefone é obrigatório'],
+      trim: true,
+    },
+    documento: {
+      type: String,
+      required: [true, 'CNPJ é obrigatório'],
+      unique: true,
+      trim: true,
+      set: (valor: string) => valor.replace(/\D/g, ''),
+      validate: {
+        validator: (valor: string) => cnpj.isValid(valor),
+        message: 'CNPJ inválido',
+      },
+    },
     senha: {
       type: String,
       required: [true, 'Senha é obrigatória'],
@@ -35,7 +54,7 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-UserSchema.pre('save', async function (next) {
+CooperativeSchema.pre('save', async function (next) {
   if (this.isModified('senha')) {
     const salt = await bcrypt.genSalt(10);
     this.senha = await bcrypt.hash(this.senha, salt);
@@ -43,10 +62,13 @@ UserSchema.pre('save', async function (next) {
   next();
 });
 
-UserSchema.methods.compararSenha = async function (
+CooperativeSchema.methods.compararSenha = async function (
   senhaInformada: string
 ): Promise<boolean> {
   return bcrypt.compare(senhaInformada, this.senha);
 };
 
-export const User = mongoose.model<IUser>('User', UserSchema);
+export const Cooperative = mongoose.model<ICooperative>(
+  'Cooperative',
+  CooperativeSchema
+);
