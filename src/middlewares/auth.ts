@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
-import { verificarToken } from '../utils/jwt';
+import { verificarToken, TipoUsuario } from '../utils/jwt';
 
 declare global {
   namespace Express {
     interface Request {
       usuarioId?: string;
-      usuarioCooperativa?: boolean;
+      usuarioTipo?: TipoUsuario;
     }
   }
 }
@@ -27,7 +27,7 @@ export const autenticar = (
   try {
     const payload = verificarToken(token);
     req.usuarioId = payload.id;
-    req.usuarioCooperativa = payload.cooperativa;
+    req.usuarioTipo = payload.tipo;
     next();
   } catch {
     res.status(401).json({ mensagem: 'Token inválido ou expirado.' });
@@ -39,10 +39,8 @@ export const apenasCooperativa = (
   res: Response,
   next: NextFunction
 ): void => {
-  if (!req.usuarioCooperativa) {
-    res
-      .status(403)
-      .json({ mensagem: 'Acesso restrito a cooperativas.' });
+  if (req.usuarioTipo !== 'cooperative') {
+    res.status(403).json({ mensagem: 'Acesso restrito a cooperativas.' });
     return;
   }
   next();
