@@ -1,8 +1,10 @@
 import jwt from 'jsonwebtoken';
 
+export type TipoUsuario = 'user' | 'cooperative';
+
 interface TokenPayload {
   id: string;
-  cooperativa: boolean;
+  tipo: TipoUsuario;
 }
 
 export const gerarToken = (payload: TokenPayload): string => {
