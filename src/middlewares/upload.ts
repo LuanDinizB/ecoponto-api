@@ -3,7 +3,7 @@ import multer from 'multer';
 const storage = multer.memoryStorage();
 
 const fileFilter = (_req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp'];
+  const tiposPermitidos = ['image/jpeg', 'image/png', 'image/webp',   'image/heic', 'image/heif',];
 
   if (tiposPermitidos.includes(file.mimetype)) {
     cb(null, true);
