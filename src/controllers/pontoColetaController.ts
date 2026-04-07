@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { PontoColeta } from '../models/PontoColeta';
 import { geocodificarEndereco } from '../utils/geocoding';
+import { uploadImagem, deletarImagem } from '../utils/cloudinary';
 import logger from '../config/logger';
 
 const montarEndereco = (
@@ -17,18 +18,25 @@ export const criarPonto = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { nome, cep, logradouro, numero, bairro, cidade, uf, horario, tags, imagem } = req.body;
+    const { nome, cep, logradouro, numero, bairro, cidade, uf, horario, tags } = req.body;
 
     logger.info({ usuarioId: req.usuarioId, nome }, 'Tentativa de criação de ponto de coleta');
 
     const endereco = montarEndereco(logradouro, numero, bairro, cidade, uf, cep);
     const coordenadas = await geocodificarEndereco(endereco);
 
+    let imagem: string | null = null;
+    if (req.file) {
+      imagem = await uploadImagem(req.file.buffer);
+    }
+
     const ponto = await PontoColeta.create({
       nome, cep, logradouro, numero, bairro, cidade, uf, endereco,
       lat: coordenadas?.lat,
       lng: coordenadas?.lng,
-      horario, tags, imagem,
+      horario,
+      tags: typeof tags === 'string' ? JSON.parse(tags) : tags,
+      imagem,
       cooperativa: req.usuarioId,
     });
 
@@ -138,7 +146,7 @@ export const atualizarPonto = async (
       return;
     }
 
-    const { nome, cep, logradouro, numero, bairro, cidade, uf, horario, tags, imagem } = req.body;
+    const { nome, cep, logradouro, numero, bairro, cidade, uf, horario, tags } = req.body;
 
     const enderecoMudou = logradouro || numero || bairro || cidade || uf || cep;
     let endereco = ponto.endereco;
@@ -159,9 +167,20 @@ export const atualizarPonto = async (
       lng = coordenadas?.lng;
     }
 
+    let imagem = ponto.imagem;
+    if (req.file) {
+      if (ponto.imagem) await deletarImagem(ponto.imagem);
+      imagem = await uploadImagem(req.file.buffer) ?? ponto.imagem;
+    }
+
     const atualizado = await PontoColeta.findByIdAndUpdate(
       req.params.id,
-      { nome, cep, logradouro, numero, bairro, cidade, uf, endereco, lat, lng, horario, tags, imagem },
+      {
+        nome, cep, logradouro, numero, bairro, cidade, uf,
+        endereco, lat, lng, horario,
+        tags: typeof tags === 'string' ? JSON.parse(tags) : tags,
+        imagem,
+      },
       { new: true, runValidators: true }
     );
 
@@ -201,6 +220,8 @@ export const deletarPonto = async (
       res.status(403).json({ mensagem: 'Você não tem permissão para excluir este ponto.' });
       return;
     }
+
+    if (ponto.imagem) await deletarImagem(ponto.imagem);
 
     await PontoColeta.findByIdAndDelete(req.params.id);
 
