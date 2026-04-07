@@ -1,12 +1,6 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
-
-export interface IUser extends Document {
-  nome: string;
-  email: string;
-  senha: string;
-  compararSenha(senhaInformada: string): Promise<boolean>;
-}
+import { IUser } from '../types/user';
 
 const UserSchema = new Schema<IUser>(
   {
@@ -30,9 +24,7 @@ const UserSchema = new Schema<IUser>(
       select: false,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 UserSchema.pre('save', async function (next) {

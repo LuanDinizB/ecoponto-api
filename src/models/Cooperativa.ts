@@ -1,15 +1,7 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { cnpj } from 'cpf-cnpj-validator';
-
-export interface ICooperative extends Document {
-  nome: string;
-  email: string;
-  telefone: string;
-  documento: string;
-  senha: string;
-  compararSenha(senhaInformada: string): Promise<boolean>;
-}
+import { ICooperative } from '../types/cooperativa';
 
 const CooperativeSchema = new Schema<ICooperative>(
   {
@@ -49,9 +41,7 @@ const CooperativeSchema = new Schema<ICooperative>(
       select: false,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 CooperativeSchema.pre('save', async function (next) {
