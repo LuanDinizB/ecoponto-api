@@ -35,7 +35,7 @@ export const criarPonto = async (
       nome, cep, logradouro, numero, bairro, cidade, uf, endereco,
       lat: coordenadas?.lat,
       lng: coordenadas?.lng,
-      horario,
+      horario: typeof horario === 'string' ? JSON.parse(horario) : horario,
       tags: typeof tags === 'string' ? JSON.parse(tags) : tags,
       imagem,
       cooperativa: req.usuarioId,
