@@ -3,6 +3,7 @@ import { PontoColeta } from '../models/PontoColeta';
 import { geocodificarEndereco } from '../utils/geocoding';
 import { uploadImagem, deletarImagem } from '../utils/cloudinary';
 import logger from '../config/logger';
+import { sendNewPointPushNotification } from '../utils/webpush';
 
 const montarEndereco = (
   logradouro: string,
@@ -41,6 +42,16 @@ export const criarPonto = async (
     });
 
     logger.info({ usuarioId: req.usuarioId, pontoId: ponto._id, coordenadas }, 'Ponto de coleta criado com sucesso');
+
+    sendNewPointPushNotification({
+      pointId: String(ponto._id),
+      title: 'Novo ponto de coleta! ♻️',
+      message: `${ponto.nome} foi cadastrado em ${ponto.cidade} - ${ponto.uf}`,
+      cidade: ponto.cidade,
+      tags: ponto.tags,
+      url: `/pontos-coleta/${ponto._id}`,
+    });
+
     res.status(201).json({ mensagem: 'Ponto de coleta criado com sucesso.', ponto });
   } catch (error: unknown) {
     if (
